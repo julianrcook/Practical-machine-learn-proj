@@ -1,0 +1,140 @@
+---
+title: "Practical machine Learning project"
+author: "Julian Cook"
+date: "Sunday, February 22, 2015"
+output: html_document
+---
+
+
+## Summary
+
+This project attempts to classify human actions based on body movements and postures. This discipline is also know as Human Activity Recognition (HAR). The data were provided by http://groupware.les.inf.puc-rio.br and uses  devices such as Jawbone Up, Nike FuelBand, and Fitbit.  In this project, the goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+Below, we use KNN and Random forest to predict the manner in which they did the exercise. This is the *"classe"* variable in the training set.
+
+### Cleaning and Data reduction
+
+In the project an initial attempt was made to reduce the training dataset, based on observations of when columns were populated or blank and  also when columns were predominantly populated with NA's.
+
+Eventual reduction of columns was from 160 to 53 (including the 'classe' column, the target)
+PCA was not used since significant data reduction was achieved in the above steps.
+
+
+
+```{r, LoadData, message=FALSE, cache=FALSE}
+options(warn = -1)
+library(dplyr, quietly=TRUE)
+library(caret, quietly=TRUE)
+
+```
+
+#### load the Training and testing files
+
+```{r, CSVfiles}
+activity_train<-read.csv("pml-training.csv")
+activity_test<-read.csv("pml-testing.csv")
+dActivity_train<-tbl_df(activity_train)
+# immediately remove the row and name columns
+dActivity_train$X<-NULL
+dActivity_train$user_name<-NULL
+
+
+```
+
+#### Reduce the data
+
+Reduce the data by removing columns that are rarely populated. Most of the columns eliminated are only updated when there is a 'new_window' (new_window=yes) and do not affect the overall result
+
+We remove:
+
+- Columns with many NA values
+- Columns with many blanks
+- simply eliminating columns that are not required, such as time stamps and names
+
+```{r, ColumnReduction}
+dactivity_row1<-dActivity_train[1,]
+# use the first row as a guide for finding NA cols
+dactivity_row1NotNA<-!is.na(dactivity_row1[,])
+dActivity_train_red1<-dActivity_train[,dactivity_row1NotNA] # first stage of reduction
+dactivity_row1_red<-dActivity_train_red1[1,]
+dactivity_row1NotBL<-(dactivity_row1_red[,]!="")
+# Select the cols with actual values in row 1, i.e. not blank
+dActivity_train_red2<-dActivity_train_red1[,dactivity_row1NotBL] # red2 is reduced cols stage2
+dActivity_train_red2$raw_timestamp_part_1<-NULL;
+dActivity_train_red2$raw_timestamp_part_2<-NULL
+dActivity_train_red2$cvtd_timestamp<-NULL
+dActivity_train_red2$new_window<-NULL;
+dActivity_train_red2$num_window<-NULL
+# rename the frame to reflect number of training cols
+dActivity_train52<-(dActivity_train_red2)
+
+```
+
+## Data Partitioning
+
+The training data is split 70:30 into training and test sets
+
+```{r, Partition, message=FALSE, cache=TRUE}
+
+inTrain <- createDataPartition(y=dActivity_train52$classe, p=0.7, list=FALSE)
+training <- dActivity_train52[inTrain,]
+testing <- dActivity_train52[-inTrain,]
+
+```
+
+## KNN model
+
+As an initial attempt, A KNN model is fitted to the reduced columns, with no attempt at normalization or cross-validation. This is to get an initial look at how accurate the model would be without any attempt to optimize the model building process.
+
+the KNN model acheives the following results
+
+Accuracy : 0.9098 
+
+
+Confusion Matrix and Statistics
+
+
+|Prediction|    |A    |B    |C    |D    |E|
+|---------|----|------|-----|-----|-----|--|
+|         |A   | 1595  |  21|   18|   28|   12|
+|         |B   |54|  986|   44|   33|   22|
+|         |C   |14|  29|  944|   26|   13|
+|         |D   |16|  7|   63|  871 |   7|
+|         |E   |12| 49|   30|   33|  958|
+
+
+```{r, KNN, message=FALSE, cache=TRUE}
+set.seed(32343)
+
+# modFitknn <- train(classe ~ .,method="knn", data=training) # here the knnmodel is created
+# confusionMatrix(testing$classe,predict(modFitknn,testing))
+
+
+```
+
+## Random Forest model
+
+A Random Forest model was testing with pre-processing options of center and scale (normalization). The accuracy rate acheived was >99%. This was sufficient to correctly classify all 20 rows in the test set, so this model was judged to be sufficiently accurate.
+
+ Accuracy : 0.9929 
+ 
+ |Prediction|    |A    |B    |C    |D    |E|
+|---------|----|------|-----|-----|-----|--|
+|         |A|1671|    3|    0|    0|    0|
+|         |B|    4| 1133|    2|    0|    0|
+|         |C|    0|    6| 1015|    5|    0|
+|         |D|    1|    1|    9|  951|    2|
+|         |E|    0|    0|    5|    4| 1073|
+
+```{r, RFwNormalize, message=FALSE, cache=TRUE}
+
+# Now try random forest w/ Cen+Scl
+# modFitRF1 <- train(classe ~ ., preProcess=c("center","scale"), method="rf", data=training) # here the Norm'd rf model is created RF1= no CV, normalized
+# confusionMatrix(testing$classe,predict(modFitRF1,testing))
+# PredictRF1<-predict(modFitRF1, newdata=activity_test) #  predict sub set
+# PredictRF1
+
+```
+
+
+
