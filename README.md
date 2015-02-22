@@ -1,7 +1,7 @@
 # Practical-machine-learn-proj
 Project classifying Human activity (HAR) successively using KNN and Random Forests.
 
-## Inputs files
+## Input files containing 160 cols and about 20k rows (training)
 ### The training data
 https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
 ### The test data 
