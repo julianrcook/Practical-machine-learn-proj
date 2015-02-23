@@ -86,7 +86,7 @@ testing <- dActivity_train52[-inTrain,]
 
 As an initial attempt, A KNN model is fitted to the reduced columns, with no attempt at normalization or cross-validation. This is to get an initial look at how accurate the model would be without any attempt to optimize the model building process.
 
-the KNN model acheives the following results
+the KNN model achieves the following results
 
 Accuracy : 0.9098 
 
@@ -106,15 +106,15 @@ Confusion Matrix and Statistics
 ```{r, KNN, message=FALSE, cache=TRUE}
 set.seed(32343)
 
-# modFitknn <- train(classe ~ .,method="knn", data=training) # here the knnmodel is created
-# confusionMatrix(testing$classe,predict(modFitknn,testing))
+modFitknn <- train(classe ~ .,method="knn", data=training) # here the knnmodel is created
+confusionMatrix(testing$classe,predict(modFitknn,testing))
 
 
 ```
 
 ## Random Forest model
 
-A Random Forest model was testing with pre-processing options of center and scale (normalization). The accuracy rate acheived was >99%. This was sufficient to correctly classify all 20 rows in the test set, so this model was judged to be sufficiently accurate.
+A Random Forest model was testing with pre-processing options of center and scale (normalization). The accuracy rate achieved was >99%. This was sufficient to correctly classify all 20 rows in the test set, so this model was judged to be sufficiently accurate.
 
  Accuracy : 0.9929 
  
@@ -129,12 +129,21 @@ A Random Forest model was testing with pre-processing options of center and scal
 ```{r, RFwNormalize, message=FALSE, cache=TRUE}
 
 # Now try random forest w/ Cen+Scl
-# modFitRF1 <- train(classe ~ ., preProcess=c("center","scale"), method="rf", data=training) # here the Norm'd rf model is created RF1= no CV, normalized
-# confusionMatrix(testing$classe,predict(modFitRF1,testing))
-# PredictRF1<-predict(modFitRF1, newdata=activity_test) #  predict sub set
-# PredictRF1
+modFitRF1 <- train(classe ~ ., preProcess=c("center","scale"), method="rf", data=training) # here the Norm'd rf model is created RF1= no CV, normalized
+confusionMatrix(testing$classe,predict(modFitRF1,testing))
+PredictRF1<-predict(modFitRF1, newdata=activity_test) #  predict sub set
+PredictRF1
 
 ```
 
 
+## Cross validation
 
+Cross validation was performed by pre-processing the data with the trainControl option is caret and re-running the RF model fit, Note this is not run in the Knitr file because of the time required.
+
+```{r, CVonRF}
+# with  cross validation
+#tc <- trainControl(method="cv", number=5)
+#modFitRF2 <- train(classe ~ ., preProcess=c("center","scale"), method="rf", data=training, trainControl=tc)
+
+```
